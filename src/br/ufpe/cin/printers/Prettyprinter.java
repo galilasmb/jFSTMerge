@@ -46,11 +46,11 @@ public final class Prettyprinter {
 	 * @param context
 	 */
 	public static void printOnScreenMergedCode(MergeContext context) {
-		System.out.println("MERGE OUTPUT:");
+		System.out.println("SEMISTRUCTURED MERGE OUTPUT:");
 		System.out.println((context.semistructuredOutput.isEmpty()?"empty (deleted, inexistent or invalid merged files)\n":context.semistructuredOutput));
 
-		/*		System.out.println("UNSTRUCTURED MERGE OUTPUT:");
-		System.out.println((context.unstructuredOutput.isEmpty()?"empty (deleted, inexistent or invalid merged files)\n":context.unstructuredOutput));*/
+		System.out.println("UNSTRUCTURED MERGE OUTPUT:");
+		System.out.println((context.unstructuredOutput.isEmpty()?"empty (deleted, inexistent or invalid merged files)\n":context.unstructuredOutput));
 	}
 
 	/**

@@ -1,7 +1,9 @@
 package br.ufpe.cin.logging;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -15,6 +17,7 @@ import br.ufpe.cin.crypto.CryptoUtils;
 import br.ufpe.cin.exceptions.CryptoException;
 import br.ufpe.cin.exceptions.ExceptionUtils;
 import br.ufpe.cin.exceptions.PrintException;
+import br.ufpe.cin.files.FilesManager;
 import br.ufpe.cin.mergers.util.MergeConflict;
 import br.ufpe.cin.mergers.util.MergeContext;
 import br.ufpe.cin.mergers.util.Source;
@@ -65,7 +68,7 @@ public class LoggerStatistics {
 				//logging merged files for further analysis
 				logFiles(timeStamp,context);
 			}
-			
+
 			logSummary();
 		}
 		catch (CryptoException c)
@@ -107,28 +110,19 @@ public class LoggerStatistics {
 		FileUtils.write(statisticsLog, loggermsg, true);
 	}
 
-	public static void logConflicts(List<MergeConflict> conflicts, Source source) throws IOException {
+	public static void logConflicts(MergeContext context, List<MergeConflict> conflicts, Source source) throws IOException {
 		String logpath = System.getProperty("user.home")+ File.separator + ".jfstmerge" + File.separator;
 		new File(logpath).mkdirs(); //ensuring that the directories exists	
-		for(MergeConflict mc : conflicts){
-			String origin =  ((mc.leftOriginFile != null) ? mc.leftOriginFile.getAbsolutePath() : "<empty left>") 
-					+ ";" + ((mc.baseOriginFile  != null) ? mc.baseOriginFile.getAbsolutePath() : "<empty base>") 
-					+ ";" + ((mc.rightOriginFile != null) ? mc.rightOriginFile.getAbsolutePath(): "<empty right>");
-			if(source == null){
-				File f = new File(logpath + "conflicts.equals");
-				FileUtils.write(f,(origin+'\n'+mc.body+'\n'),true);
+		if(source == null){
+			printConflicts(context, conflicts, (logpath + "conflicts.equals"));
+		}else {
+			switch (source) {
+			case UNSTRUCTURED:
+				printConflicts(context, conflicts, (logpath + "conflicts.unstructured"));
 				break;
-			}else {
-				switch (source) {
-				case UNSTRUCTURED:
-					File f = new File(logpath + "conflicts.unstructured");
-					FileUtils.write(f,(origin+'\n'+mc.body+'\n'),true);
-					break;
-				case SEMISTRUCTURED:
-					f = new File(logpath + "conflicts.semistructured");
-					FileUtils.write(f,(origin+'\n'+mc.body+'\n'),true);
-					break;
-				}
+			case SEMISTRUCTURED:
+				printConflicts(context, conflicts, (logpath + "conflicts.semistructured"));
+				break;
 			}
 		}
 	}
@@ -396,6 +390,46 @@ public class LoggerStatistics {
 		summary.append("\n\n\n");
 		summary.append("LAST TIME UPDATED: " + (new SimpleDateFormat("yyyy/MM/dd_HH:mm:ss").format(Calendar.getInstance().getTime())));
 		return summary;
+	}
+
+	private static void printConflicts(MergeContext context, List<MergeConflict> confs, String logpath) {
+		if(!confs.isEmpty()){
+			try{
+				StringBuilder builder = new StringBuilder();
+				builder.append("----------------------------\n");
+				for(MergeConflict mc : confs){
+					builder.append(mc.body);
+					builder.append("\n----------------------------\n");
+				}
+				String conflicts = builder.toString();
+
+
+				String files = context.fullQualifiedMergedClass;
+				String leftContent = FilesManager.readFileContent(context.getLeft());
+				String baseContent = FilesManager.readFileContent(context.getBase());
+				String rightContent= FilesManager.readFileContent(context.getRight());
+				String ssmeContent = context.semistructuredOutput;
+				String unstContent = context.unstructuredOutput;
+
+				builder = new StringBuilder();
+				builder.append("########################################################\n");
+				builder.append("Files: " + files + "\n");
+				builder.append("Conflicts:\n" + conflicts + "\n");
+				builder.append("Semistructured Merge Output:\n" + ssmeContent + "\n");
+				builder.append("Unstructured Merge Output:\n" + unstContent   + "\n");
+				builder.append("Left Content:\n" + ((leftContent.isEmpty()) ?"<empty>":leftContent) + "\n");
+				builder.append("Base Content:\n" + ((baseContent.isEmpty()) ?"<empty>":baseContent) + "\n");
+				builder.append("Right Content:\n"+ ((rightContent.isEmpty())?"<empty>":rightContent)+ "\n");
+
+
+				PrintWriter pw = new PrintWriter(new FileOutputStream(new File(logpath), true), true); 
+				pw.append(builder.toString()+"\n");
+				pw.close();
+			}catch(Exception e){
+				e.printStackTrace();
+				System.exit(-1);
+			}
+		}
 	}
 
 }

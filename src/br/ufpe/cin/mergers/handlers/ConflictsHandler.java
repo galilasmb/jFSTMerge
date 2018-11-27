@@ -25,7 +25,7 @@ final public class ConflictsHandler {
 		findAndResolveRenamingOrDeletionConflicts(context);
 		findAndDetectInitializationBlocks(context);
 		findAndDetectDeletionsOfHighLevelElements(context);
-		findAndAccountDuplicatedDeclarationErrors(context);
+		//findAndAccountDuplicatedDeclarationErrors(context);
 	}
 
 	private static void findAndDetectTypeAmbiguityErrors(MergeContext context) {

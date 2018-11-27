@@ -55,11 +55,11 @@ public class JFSTMerge {
 	@Parameter(names = "-g", description = "Parameter to identify that the tool is being used as a git merge driver.")
 	public static boolean isGit = false;
 
-	@Parameter(names = "-c", description = "Parameter to disable cryptography during logs generation (true or false).",arity = 1)
-	public static boolean isCryptographed = true;
-	
-	@Parameter(names = "-l", description = "Parameter to disable logging of merged files (true or false).",arity = 1)
-	public static boolean logFiles = true;
+	@Parameter(names = "-c", description = "Parameter to disable cryptography during logs generation (true or false).")
+	public static boolean isCryptographed = false;
+
+	@Parameter(names = "-l", description = "Parameter to disable logging of merged files (true or false).")
+	public static boolean logFiles = false;
 
 	/**
 	 * Merges merge scenarios, indicated by .revisions files. 
@@ -163,7 +163,7 @@ public class JFSTMerge {
 			long t0 = System.nanoTime();
 			try {
 				//running unstructured merge first is necessary due to future steps.
-				context.unstructuredOutput = TextualMerge.merge(left, base, right, false);
+				context.unstructuredOutput = TextualMerge.merge(left, base, right, true);
 				context.unstructuredMergeTime = System.nanoTime() - t0;
 
 				context.semistructuredOutput = SemistructuredMerge.merge(left, base, right, context);
@@ -212,11 +212,17 @@ public class JFSTMerge {
 		merger.run(args);
 		System.exit(conflictState);
 
-		/*		new JFSTMerge().mergeFiles(
-						new File("C:/Users/Guilherme/Desktop/test/projects/sisbol/revisions/rev_0533511_8d296b5/rev_left_0533511/sisbol-core/src/main/java/br/mil/eb/cds/sisbol/boletim/util/Messages.java"),
-						new File("C:/Users/Guilherme/Desktop/test/projects/sisbol/revisions/rev_0533511_8d296b5/rev_base_7004707/sisbol-core/src/main/java/br/mil/eb/cds/sisbol/boletim/util/Messages.java"),
-						new File("C:/Users/Guilherme/Desktop/test/projects/sisbol/revisions/rev_0533511_8d296b5/rev_right_8d296b5/sisbol-core/src/main/java/br/mil/eb/cds/sisbol/boletim/util/Messages.java"),
-						null);*/
+		//				new JFSTMerge().mergeFiles(
+		//						new File("C:/Users/Guilherme/Downloads/conflito/rev_351c17f_073572c/rev_left_351c17f/cug/src/main/java/br/com/senai/isitics/cug/controllers/UserController.java"),
+		//						new File("C:/Users/Guilherme/Downloads/conflito/rev_351c17f_073572c/rev_base_8f2bce6/cug/src/main/java/br/com/senai/isitics/cug/controllers/UserController.java"),
+		//						new File("C:/Users/Guilherme/Downloads/conflito/rev_351c17f_073572c/rev_right_073572c/cug/src/main/java/br/com/senai/isitics/cug/controllers/UserController.java"),
+		//						null);
+
+		//		new JFSTMerge().mergeFiles(
+		//				new File("conflito/left.java"),
+		//				new File("conflito/base.java"),
+		//				new File("conflito/right.java"),
+		//				null);
 
 		/*		try {
 			List<String> listRevisions = new ArrayList<>();

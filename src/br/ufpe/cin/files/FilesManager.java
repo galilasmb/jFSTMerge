@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileReader;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.parser.txt.CharsetDetector;
 
 import br.ufpe.cin.generated.SimplePrintVisitor;
 import br.ufpe.cin.mergers.util.MergeConflict;
@@ -23,6 +27,9 @@ import br.ufpe.cin.mergers.util.MergeContext;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
 
 import de.ovgu.cide.fstgen.ast.FSTNode;
 import de.ovgu.cide.fstgen.ast.FSTNonTerminal;
@@ -219,15 +226,15 @@ public final class FilesManager {
 	 * @param file to be read
 	 * @return string content of the file, or null in case of errors.
 	 */
-	public static String readFileContent(File file){
-		//StringBuilder content = new StringBuilder();
+	public static String readFileContent(File file)
+	{
 		String content = "";
-		try{
-			BufferedReader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()), StandardCharsets.UTF_8);
-			content = reader.lines().collect(Collectors.joining("\n"));
-		}catch(Exception e){
-			//System.err.println(e.getMessage());
+		try
+		{
+			BufferedReader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath(), new String[0]), guessCharset(file));
+			content = (String)reader.lines().collect(Collectors.joining("\n"));
 		}
+		catch (Exception localException) {}
 		return content;
 	}
 
@@ -537,7 +544,8 @@ public final class FilesManager {
 	public static String indentCode(String sourceCode){
 		String indentedCode = sourceCode;
 		try{
-			CompilationUnit indenter = JavaParser.parse(new ByteArrayInputStream(sourceCode.getBytes()), StandardCharsets.UTF_8.displayName());
+			//CompilationUnit indenter = JavaParser.parse(new ByteArrayInputStream(sourceCode.getBytes()), StandardCharsets.UTF_8.displayName());
+			CompilationUnit indenter = JavaParser.parse(new ByteArrayInputStream(sourceCode.getBytes()),guessCharset(sourceCode).displayName());
 			indentedCode = indenter.toString();
 		} catch (Exception e){} //in case of any errors, returns the non-indented sourceCode
 		return indentedCode;
@@ -609,6 +617,83 @@ public final class FilesManager {
 		return ((longerLength - levenshteinDistance)/(double) longerLength);
 	}
 
+	/**
+	 * Pretty print of a given non-terminal node.
+	 * @param node
+	 */
+	public static String prettyPrint(FSTNonTerminal node) {
+		SimplePrintVisitor visitor = new SimplePrintVisitor();
+		visitor.visit(node);
+		return visitor.getResult().replaceAll(("  "), " ");
+	}
+
+	public static Charset guessCharset(File f)
+	{
+		try
+		{
+			Path path = Paths.get(f.getAbsolutePath(), new String[0]);
+			byte[] data = Files.readAllBytes(path);
+			CharsetDetector detector = new CharsetDetector();
+			detector.setText(data);
+			String s = detector.detect().getName();
+			return Charset.forName(s);
+		}
+		catch (Exception e) {}
+		return StandardCharsets.UTF_8;
+	}
+	
+	public static Charset guessCharset(String s)
+	{
+		try
+		{
+			byte[] data = s.getBytes();
+			CharsetDetector detector = new CharsetDetector();
+			detector.setText(data);
+			String e = detector.detect().getName();
+			return Charset.forName(e);
+		}
+		catch (Exception e) {}
+		return StandardCharsets.UTF_8;
+	}
+	
+	public static String getFullQualifiedName(File fileClass) {
+		try {
+			String fullqualifiedname = "";
+			CompilationUnit indenter = JavaParser.parse(fileClass);
+			PackageDeclaration pckg = indenter.getPackage();
+			if(pckg!=null){
+				fullqualifiedname += pckg.getPackageName();
+			}
+			List<TypeDeclaration> types = indenter.getTypes();
+			if(!types.isEmpty()){
+				TypeDeclaration type = types.get(0);
+				if(type instanceof ClassOrInterfaceDeclaration ){
+					fullqualifiedname += ((!fullqualifiedname.isEmpty())?".":"") + type.getName();
+				}
+			}
+			return fullqualifiedname;
+		} catch (Exception e) {
+			return "";
+		}
+	}
+	
+	/**
+	 * Returns the last line of text file.
+	 * @param filePath
+	 */
+	public static String lastLine(String filePath){
+		String lastLine = null;
+		try(BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+			String currentLine = null;
+			while ((currentLine = reader.readLine()) != null){
+				lastLine = currentLine;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return lastLine;
+	}
+
 	@SuppressWarnings("unused")
 	private static String undoReplaceConflictMarkers(String indentedCode) {
 		// dummy code for identation purposes
@@ -624,15 +709,5 @@ public final class FilesManager {
 		sourceCode = sourceCode.replaceAll("=======", "int bbbb;");
 		sourceCode = sourceCode.replaceAll(">>>>>>> YOURS", "int yyyy;");
 		return sourceCode;
-	}
-	
-	/**
-	 * Pretty print of a given non-terminal node.
-	 * @param node
-	 */
-	public static String prettyPrint(FSTNonTerminal node) {
-		SimplePrintVisitor visitor = new SimplePrintVisitor();
-		visitor.visit(node);
-		return visitor.getResult().replaceAll(("  "), " ");
 	}
 }

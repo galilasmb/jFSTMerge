@@ -63,7 +63,8 @@ public class MergeContext {
 	public int orderingConflicts 			   = 0;
 	public int duplicatedDeclarationErrors	   = 0;
 	public int equalConflicts     = 0;
-	
+	public String fullQualifiedMergedClass  = "";
+
 	
 	public MergeContext(){
 	}
@@ -77,6 +78,8 @@ public class MergeContext {
 		this.leftContent = FilesManager.readFileContent(this.left);
 		this.baseContent = FilesManager.readFileContent(this.base);
 		this.rightContent= FilesManager.readFileContent(this.right);
+	
+		this.setFullQualifiedMergedClassName();
 	}
 
 	/**
@@ -158,5 +161,23 @@ public class MergeContext {
 
 	public void setRightContent(String rightContent) {
 		this.rightContent = rightContent;
+	}
+	
+	private void setFullQualifiedMergedClassName(){
+		String name = "";
+		if(this.left != null && this.left.length()!=0 ){
+			name = FilesManager.getFullQualifiedName(this.left);
+		} else if(this.right != null && this.right.length()!=0){
+			name = FilesManager.getFullQualifiedName(this.right);
+		} else if(this.base != null && this.base.length()!=0){
+			name = FilesManager.getFullQualifiedName(this.base);
+		} 
+		if(name.isEmpty()){
+			name = (this.left 	!= null ? this.left.getAbsolutePath() : "<empty left>") + "#" + (
+					this.base 	!= null ? this.base.getAbsolutePath() : "<empty base>") + "#" + (
+					this.right 	!= null ? this.right.getAbsolutePath(): "<empty right>");
+		}
+		String projectAndCommit = FilesManager.lastLine(System.getProperty("user.home") + File.separator + ".jfstmerge" + File.separator + "execution.log");
+		this.fullQualifiedMergedClass =	projectAndCommit+","+name;
 	}
 }

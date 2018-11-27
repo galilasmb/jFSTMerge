@@ -39,7 +39,8 @@ public class JParser {
 			if(!JFSTMerge.isGit){
 				System.out.println("Parsing: " + javaFile.getAbsolutePath());
 			}
-			Java18MergeParser parser = new Java18MergeParser(new OffsetCharStream(new InputStreamReader(new FileInputStream(javaFile),"UTF8")));
+			//Java18MergeParser parser = new Java18MergeParser(new OffsetCharStream(new InputStreamReader(new FileInputStream(javaFile),"UTF8")));
+			Java18MergeParser parser = new Java18MergeParser(new OffsetCharStream(new InputStreamReader(new FileInputStream(javaFile),FilesManager.guessCharset(javaFile))));
 			parser.CompilationUnit(false);
 			generatedAst.addChild(new FSTNonTerminal("Java-File", javaFile.getName()));
 			generatedAst.addChild(parser.getRoot());

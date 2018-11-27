@@ -91,5 +91,17 @@ public class RenamingConflictsHandlerTest {
 		assertTrue(ctx.renamingConflicts == 1);
 	}
 	
+	@Test
+	public void testConflictingRenamingInLeftEnum() {
+		MergeContext ctx = 	new JFSTMerge().mergeFiles(
+				new File("testfiles/renamingmethodleftconfenum/left.java"), 
+				new File("testfiles/renamingmethodleftconfenum/base.java"), 
+				new File("testfiles/renamingmethodleftconfenum/right.java"),
+				null);
+		String mergeResult = FilesManager.getStringContentIntoSingleLineNoSpacing(ctx.semistructuredOutput);
+		
+		assertTrue(mergeResult.contains("<<<<<<<MINEpublicvoidm(){inta;}=======publicvoidn(){}>>>>>>>YOURS"));
+		assertTrue(ctx.renamingConflicts == 1);
+	}
 
 }

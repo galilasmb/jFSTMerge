@@ -218,9 +218,9 @@ public final class Statistics {
 			}
 		}
 
-		LoggerStatistics.logConflicts(equalMergeConflicts,null);
-		LoggerStatistics.logConflicts(differentUnstructuredMergeConflicts,Source.UNSTRUCTURED);
-		LoggerStatistics.logConflicts(differentSemistructuredMergeConflicts,Source.SEMISTRUCTURED);
+		LoggerStatistics.logConflicts(context,equalMergeConflicts,null);
+		LoggerStatistics.logConflicts(context,differentUnstructuredMergeConflicts,Source.UNSTRUCTURED);
+		LoggerStatistics.logConflicts(context,differentSemistructuredMergeConflicts,Source.SEMISTRUCTURED);
 	}
 
 	private static boolean areEquivalentConflicts(MergeConflict confa, MergeConflict confb) {
