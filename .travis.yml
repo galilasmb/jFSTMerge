@@ -1,19 +1,26 @@
+
+sudo: required
 language: java
+
 jdk:
- - oraclejdk8
-notifications:
- email:
-  recipients:
-   - joao.coutinho9@gmail.com
-  on_success: always
-before_install:
-- ./gradlew clean build -x test
-- cp build/libs/jFSTMerge-all.jar testfiles/shelltests/config/jFSTMerge.jar
-- bash testfiles/shelltests/config/gitconfiguration.sh
-- git config --global user.email "gjcc@cin.ufpe.br"
-- git config --global user.name "Guilherme Cavalcanti" 
-- sudo apt-get install shunit2
+  - openjdk8
+
 script:
-- ./gradlew test
-- cd testfiles/shelltests/
-- shunit2 s3mTests.sh
+  - ./gradlew build -x test
+
+before_deploy:
+    - mkdir MiningBuild
+    - find . -name '*.jar' -exec cp {} ./MiningBuild \;
+    - cd /home/travis/build/galilasmb/jFSTMerge/MiningBuild
+    - tar -zcvf result.tar.gz *
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: result.tar.gz
+  name: fetchjar-62faf1bf32e1a07a971e56c8a3de8ae33988839e
+  file_glob: true
+  overwrite: false
+  skip_cleanup: true
+  on:
+    all_branches: true 
+            
